@@ -6,8 +6,10 @@ const cors = require("cors");
 dotenv.config();
 const app = express();
 
-app.use(cors({ origin: "hotel-management-client-lr9upp30m-harishsingh-01s-projects.vercel.app", credentials: true }));
-
+app.use(cors({
+  origin: "https://hotel-management-client-git-main-harishsingh-01s-projects.vercel.app/", // Your frontend URL
+  credentials: true, // Allow cookies and authentication headers
+}));
 
 // Middleware
 app.use(cors());
