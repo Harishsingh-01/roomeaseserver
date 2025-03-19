@@ -16,12 +16,7 @@ app.use((req, res, next) => {
 });
 
 
-app.use(cors({
-  origin: "https://hotel-management-client-git-main-harishsingh-01s-projects.vercel.app/", // Your frontend URL
-  credentials: true, // Allow cookies and authentication headers
-}));
 
-const cors = require("cors");
 
 app.use(cors({
   origin: "https://hotel-management-client-git-main-harishsingh-01s-projects.vercel.app", // ✅ Allow frontend URL
