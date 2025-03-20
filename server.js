@@ -15,14 +15,24 @@ app.use((req, res, next) => {
   next();
 });
 
-
+const allowedOrigins = [
+  "https://hotel-management-client-git-main-harishsingh-01s-projects.vercel.app",
+  "https://hotel-management-client-neon.vercel.app", // Add any other deployed frontend URLs
+  "https://hotel-management-client-harishsingh-01s-projects.vercel.app",
+];
 
 
 app.use(cors({
-  origin: "https://hotel-management-client-git-main-harishsingh-01s-projects.vercel.app", // ✅ Allow frontend URL
-  credentials: true, // ✅ Allow cookies & authentication headers
-  methods: "GET,POST,PUT,DELETE", // ✅ Allow specific methods
-  allowedHeaders: "Content-Type,Authorization", // ✅ Allow specific headers
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
+  credentials: true, // Allow credentials like cookies
+  methods: "GET,POST,PUT,DELETE", // Allow specific HTTP methods
+  allowedHeaders: "Content-Type,Authorization", // Allow specific headers
 }));
 
 
