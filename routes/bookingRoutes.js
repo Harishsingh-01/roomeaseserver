@@ -92,4 +92,45 @@ const router = express.Router();
 });
 
 
+router.post("/successs", async (req, res) => {
+  const { roomId, userId, checkIn, checkOut, totalPrice } = req.body;
+
+  if (!roomId || !userId || !checkIn || !checkOut || !totalPrice) {
+    return res.status(400).json({ error: "Missing booking details" });
+  }
+
+  try {
+    console.log("📤 Confirming booking:", { roomId, userId, checkIn, checkOut, totalPrice });
+
+    // ✅ Step 1: Save Booking to Database
+    const newBooking = new Booking({
+      roomId,
+      userId,
+      checkIn,
+      checkOut,
+      totalPrice,
+    });
+    await newBooking.save();
+
+    console.log("✅ Booking confirmed:", newBooking);
+
+    // ✅ Step 2: Fetch User Email
+    const user = await User.findById(userId);
+    if (!user || !user.email) {
+      return res.status(400).json({ error: "User email not found" });
+    }
+    const userEmail = user.email;
+
+    // ✅ Step 3: Send Confirmation Email (Example - You can use Nodemailer)
+    console.log("📧 Sending confirmation email to:", userEmail);
+    // Implement email sending logic here...
+
+    res.status(200).json({ message: "Booking confirmed and email sent!" });
+  } catch (error) {
+    console.error("❌ Booking confirmation failed:", error);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+
 module.exports = router;
