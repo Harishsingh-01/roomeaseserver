@@ -9,11 +9,10 @@ const app = express();
 
 
 const allowedOrigins = [
-  "https://hotel-management-client-git-main-harishsingh-01s-projects.vercel.app",
-  "https://hotel-management-client-neon.vercel.app", // Add any other deployed frontend URLs
-  "https://hotel-management-client-harishsingh-01s-projects.vercel.app",
+  "https://hotel-management-clientt-git-main-harishsingh-01s-projects.vercel.app",
+  "https://hotel-management-clientt-neon.vercel.app", // Add any other deployed frontend URLs
+  "https://hotel-management-clientt-harishsingh-01s-projects.vercel.app",
 ];
-
 
 app.use(cors({
   origin: function (origin, callback) {
