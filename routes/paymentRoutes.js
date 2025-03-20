@@ -28,7 +28,7 @@ router.post("/create-checkout-session", async (req, res) => {
         },
       ],
       mode: "payment",
-      success_url: `https://hotel-management-server-xpwu.onrender.com/api/bookings/successs?roomId=${roomId}&userId=${userId}&checkIn=${checkIn}&checkOut=${checkOut}&totalPrice=${price}`,
+      success_url: `https://hotel-management-server-xpwu.onrender.com/successs?roomId=${roomId}&userId=${userId}&checkIn=${checkIn}&checkOut=${checkOut}&totalPrice=${price}`,
       cancel_url: "http://localhost:3000/cancel",
     });
     console.log("testing1");
