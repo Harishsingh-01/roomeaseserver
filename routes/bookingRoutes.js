@@ -92,45 +92,41 @@ const router = express.Router();
 });
 
 
-router.post("/successs", async (req, res) => {
-  const { roomId, userId, checkIn, checkOut, totalPrice } = req.body;
+// // ✅ Handle Payment Success from Stripe success_url
+// router.get("/successs", async (req, res) => {
+//   try {
+//     const { roomId, userId, checkIn, checkOut, totalPrice } = req.query;
 
-  if (!roomId || !userId || !checkIn || !checkOut || !totalPrice) {
-    return res.status(400).json({ error: "Missing booking details" });
-  }
+//     if (!roomId || !userId || !checkIn || !checkOut || !totalPrice) {
+//       return res.status(400).json({ error: "Missing booking details" });
+//     }
 
-  try {
-    console.log("📤 Confirming booking:", { roomId, userId, checkIn, checkOut, totalPrice });
+//     console.log("📤 Processing booking:", { roomId, userId, checkIn, checkOut, totalPrice });
 
-    // ✅ Step 1: Save Booking to Database
-    const newBooking = new Booking({
-      roomId,
-      userId,
-      checkIn,
-      checkOut,
-      totalPrice,
-    });
-    await newBooking.save();
+//     // 🔹 Check if room exists
+//     const room = await Room.findById(roomId);
+//     if (!room || !room.available) {
+//       return res.status(400).json({ message: "Room is not available." });
+//     }
 
-    console.log("✅ Booking confirmed:", newBooking);
+//     // 🔹 Save booking in database
+//     const booking = new Booking({ userId, roomId, checkIn, checkOut, totalPrice });
+//     await booking.save();
 
-    // ✅ Step 2: Fetch User Email
-    const user = await User.findById(userId);
-    if (!user || !user.email) {
-      return res.status(400).json({ error: "User email not found" });
-    }
-    const userEmail = user.email;
+//     // 🔹 Mark room as unavailable
+//     room.available = false;
+//     await room.save();
 
-    // ✅ Step 3: Send Confirmation Email (Example - You can use Nodemailer)
-    console.log("📧 Sending confirmation email to:", userEmail);
-    // Implement email sending logic here...
+//     console.log("✅ Booking confirmed:", booking);
 
-    res.status(200).json({ message: "Booking confirmed and email sent!" });
-  } catch (error) {
-    console.error("❌ Booking confirmation failed:", error);
-    res.status(500).json({ error: "Server error" });
-  }
-});
+//     // 🔹 Redirect user to frontend booking success page
+//     res.redirect(`http://localhost:3000/success?roomId=${roomId}&userId=${userId}`);
+//   } catch (error) {
+//     console.error("❌ Booking Error:", error);
+//     res.status(500).json({ error: "Booking failed!" });
+//   }
+// });
+
 
 
 module.exports = router;
