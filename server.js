@@ -7,13 +7,6 @@ dotenv.config();
 const app = express();
 
 
-// Middleware
-
-app.use(express.json());
-app.use((req, res, next) => {
-  console.log(`Incoming Request: ${req.method} ${req.url}`);
-  next();
-});
 
 const allowedOrigins = [
   "https://hotel-management-client-git-main-harishsingh-01s-projects.vercel.app",
@@ -35,6 +28,13 @@ app.use(cors({
   allowedHeaders: "Content-Type,Authorization", // Allow specific headers
 }));
 
+// Middleware
+
+app.use(express.json());
+app.use((req, res, next) => {
+  console.log(`Incoming Request: ${req.method} ${req.url}`);
+  next();
+});
 
 const roomRoutes = require("./routes/roomRoutes");
 app.use("/api/", roomRoutes);
