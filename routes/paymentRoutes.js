@@ -28,7 +28,7 @@ router.post("/create-checkout-session", async (req, res) => {
         },
       ],
       mode: "payment",
-      success_url: `https://hotel-management-server-xpwu.onrender.com/api/payments/successs?roomId=${roomId}&userId=${userId}&checkIn=${checkIn}&checkOut=${checkOut}&totalPrice=${price}`,
+      success_url: `https://hotel-management-clientt-git-main-harishsingh-01s-projects.vercel.app/success?roomId=${roomId}&userId=${userId}&checkIn=${checkIn}&checkOut=${checkOut}&totalPrice=${price}`,
       cancel_url: "http://localhost:3000/cancel",
     });
     console.log("testing1");
@@ -86,44 +86,6 @@ router.post("/confirm-booking", async (req, res) => {
     await session.abortTransaction();
     session.endSession();
     console.error("Booking Error:", error);
-    res.status(500).json({ error: "Booking failed!" });
-  }
-});
-
-
-
-// ✅ Handle Payment Success from Stripe success_url
-router.get("/successs", async (req, res) => {
-  try {
-    const { roomId, userId, checkIn, checkOut, totalPrice } = req.query;
-
-    // Validate query params
-    if (!roomId || !userId || !checkIn || !checkOut || !totalPrice) {
-      return res.status(400).json({ error: "Missing booking details" });
-    }
-
-    console.log("📤 Processing booking:", { roomId, userId, checkIn, checkOut, totalPrice });
-
-    // Check if the room exists and is available
-    const room = await Room.findById(roomId);
-    if (!room || !room.available) {
-      return res.status(400).json({ message: "Room is not available." });
-    }
-
-    // Save booking to the database
-    const booking = new Booking({ userId, roomId, checkIn, checkOut, totalPrice });
-    await booking.save();
-
-    // Mark room as unavailable
-    room.available = false;
-    await room.save();
-
-    console.log("✅ Booking confirmed:", booking);
-
-    // After booking confirmation, redirect to the frontend success page
-    res.redirect(`https://hotel-management-server-xpwu.onrender.com/success?roomId=${roomId}&userId=${userId}`);
-  } catch (error) {
-    console.error("❌ Booking Error:", error);
     res.status(500).json({ error: "Booking failed!" });
   }
 });
