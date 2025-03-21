@@ -51,11 +51,9 @@ const router = express.Router();
 
 // 📌 Get all bookings for a logged-in user (Protected Route)
   router.get("/userbookings", verifyToken, async (req, res) => {
-      console.log("🔹 API Hit: /api/user (Bookings Route)"); // ✅ Confirm API is being called
-
+ 
     try {
-      console.log("Authorization Header:", req.header("Authorization")); // Debugging token
-      console.log("User ID from token:", req.user.id); // Debugging userId
+      
       const userId = req.user?.id; // Ensure userId is extracted correctly
 
       
