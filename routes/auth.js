@@ -58,7 +58,8 @@ const router = express.Router();
 // ✅ Verify OTP & Complete Registration
 router.post("/verify-otp", async (req, res) => {
   const { email, otp, name, password } = req.body;
- 
+  console.log(req.body);
+
   try {
     // ✅ OTP Check
     const otpEntry = await OTP.findOne({ email, otp });
@@ -122,7 +123,8 @@ router.post("/send-otp", async (req, res) => {
 
     await otpEntry.save();
 
- 
+    console.log("New OTP is: " + otpCode);
+
     // ✅ Send OTP via email
     const mailOptions = {
       from: process.env.EMAIL_USER,
@@ -130,7 +132,9 @@ router.post("/send-otp", async (req, res) => {
       subject: "Your OTP Code",
       text: `Your OTP is ${otpCode}. It will expire in 5 minutes.`,
     };
- 
+    // console.log("Email User:", process.env.EMAIL_USER);
+    // console.log("Email Pass:", process.env.EMAIL_PASS);
+
     await transporter.sendMail(mailOptions);    
     res.json({ success: true, message: "OTP sent successfully" });
 

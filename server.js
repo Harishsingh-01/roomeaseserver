@@ -7,35 +7,40 @@ dotenv.config();
 const app = express();
 
 
+// const allowedOrigins = [
+//   "https://hotel-management-clientt-git-main-harishsingh-01s-projects.vercel.app",
+//   "https://hotel-management-clientt-neon.vercel.app", // Add any other deployed frontend URLs
+//   "https://hotel-management-clientt-harishsingh-01s-projects.vercel.app",
+// ];
 
-const allowedOrigins = [
-  "https://hotel-management-clientt-git-main-harishsingh-01s-projects.vercel.app",
-  "https://hotel-management-clientt-neon.vercel.app", // Add any other deployed frontend URLs
-  "https://hotel-management-clientt-harishsingh-01s-projects.vercel.app",
-];
-
-app.use(cors({
-  origin: function (origin, callback) {
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error("Not allowed by CORS"));
-    }
-  },
-  credentials: true, // Allow credentials like cookies
-  methods: "GET,POST,PUT,DELETE", // Allow specific HTTP methods
-  allowedHeaders: "Content-Type,Authorization", // Allow specific headers
-}));
+// app.use(cors({
+//   origin: function (origin, callback) {
+//     if (!origin || allowedOrigins.includes(origin)) {
+//       callback(null, true);
+//     } else {
+//       callback(new Error("Not allowed by CORS"));
+//     }
+//   },
+//   credentials: true, // Allow credentials like cookies
+//   methods: "GET,POST,PUT,DELETE", // Allow specific HTTP methods
+//   allowedHeaders: "Content-Type,Authorization", // Allow specific headers
+// }));
 
 // Middleware
 
-app.use(express.json());
+app.use(
+  cors({
+    origin: "http://localhost:3000", // Allow frontend origin
+    credentials: true, // Allow cookies and authentication headers
+  })
+);app.use(express.json());
 app.use((req, res, next) => {
-   next();
+  console.log(`Incoming Request: ${req.method} ${req.url}`);
+  next();
 });
 
 const roomRoutes = require("./routes/roomRoutes");
-app.use("/api/", roomRoutes);
+app.use("/api/rooms", roomRoutes);
   
 const bookingRoutes = require("./routes/bookingRoutes");
 app.use("/api/bookings", bookingRoutes);
@@ -51,6 +56,12 @@ app.use("/api/payments", paymentRoutes); // ✅ Define payment route
 const AdminRoute = require("./routes/admin");
 app.use("/api/admin", AdminRoute);
 
+const reviewRoutes = require("./routes/reviews");
+app.use("/api/reviews", reviewRoutes);
+
+const contactRoutes = require('./routes/contactRoutes');
+
+app.use('/api/contact', contactRoutes);
 
 
 
