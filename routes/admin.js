@@ -28,18 +28,17 @@ router.post("/addrooms", verifyToken, adminMiddleware, async (req, res) => {
 // ✅ Update Room Details (Only for Admins)
 router.put("/update/:roomId", verifyToken, adminMiddleware, async (req, res) => {
   try {
+    const updatedRoom = await Room.findByIdAndUpdate(
+      req.params.roomId,
+      req.body,
+      { new: true }
+    );
 
-      const updatedRoom = await Room.findByIdAndUpdate(
-          req.params.roomId,
-          req.body,
-          { new: true } // Returns updated document
-      );
+    if (!updatedRoom) {
+        return res.status(404).json({ message: "Room not found" });
+    }
 
-      if (!updatedRoom) {
-          return res.status(404).json({ message: "Room not found" });
-      }
-
-      res.json({ message: "Room updated successfully", room: updatedRoom });
+    res.json({ message: "Room updated successfully", room: updatedRoom });
   } catch (error) {
       console.error("Error updating room:", error);
       res.status(500).json({ message: "Internal Server Error", error });
