@@ -62,18 +62,27 @@ router.put("/update/:roomId", verifyToken, adminMiddleware, async (req, res) => 
 });
 
 
-// DELETE Room Route
+// DELETE Room Route with booking cleanup
 router.delete("/delete/:roomId", verifyToken, adminMiddleware, async (req, res) => {
   try {
     const { roomId } = req.params;
+
+    // First, delete all bookings associated with this room
+    await Booking.deleteMany({ roomId: roomId });
+
+    // Then delete the room
     const deletedRoom = await Room.findByIdAndDelete(roomId);
 
     if (!deletedRoom) {
       return res.status(404).json({ message: "Room not found" });
     }
 
-    res.json({ message: "Room deleted successfully" });
+    res.json({ 
+      message: "Room and associated bookings deleted successfully",
+      deletedRoom
+    });
   } catch (error) {
+    console.error("Error deleting room:", error);
     res.status(500).json({ message: "Error deleting room", error });
   }
 });
