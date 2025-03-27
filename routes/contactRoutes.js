@@ -1,18 +1,15 @@
 const express = require('express');
 const router = express.Router();
 const Contact = require('../models/Contact');
-const auth = require('../middleware/authMiddleware'); // Import auth middleware
+const auth = require('../middleware/authMiddleware');
 const User = require('../models/User');
-const adminAuth = require('../middleware/adminMiddleware'); // Import admin auth middleware
+const adminAuth = require('../middleware/adminMiddleware');
 
-// Submit contact form - now requires authentication
 router.post('/submit', auth, async (req, res) => {
   try {
-    console.log('Received contact form data:', req.body);
 
     const { name, email, subject, message } = req.body;
 
-    // Validate required fields
     if (!name || !email || !subject || !message) {
       return res.status(400).json({ 
         message: 'All fields are required',
@@ -20,17 +17,15 @@ router.post('/submit', auth, async (req, res) => {
       });
     }
 
-    // Create new contact submission
     const contact = new Contact({
       name,
       email,
       subject,
       message,
-      userId: req.user.id // Add user ID reference
+      userId: req.user.id
     });
 
     await contact.save();
-    console.log('Contact saved:', contact);
 
     res.status(201).json({
       message: 'Thank you for your message. We will get back to you soon!',
@@ -44,10 +39,10 @@ router.post('/submit', auth, async (req, res) => {
     });
   }
 });
-// GET user profile
+
 router.get('/profile', auth, async (req, res) => {
   try {
-    const user = await User.findById(req.user.id).select('-password'); // Exclude password
+    const user = await User.findById(req.user.id).select('-password');
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
@@ -58,12 +53,9 @@ router.get('/profile', auth, async (req, res) => {
   }
 });
 
-
-
-// GET all contact form submissions (Admin only)
 router.get('/contacts', auth, adminAuth, async (req, res) => {
   try {
-    const contacts = await Contact.find().populate('userId', 'name email'); // Fetch user details
+    const contacts = await Contact.find().populate('userId', 'name email');
     res.json(contacts);
   } catch (error) {
     console.error('Error fetching contact submissions:', error);
@@ -71,5 +63,4 @@ router.get('/contacts', auth, adminAuth, async (req, res) => {
   }
 });
 
-
-module.exports = router; 
+module.exports = router;

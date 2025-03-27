@@ -5,7 +5,6 @@ const User = require("../models/User");
 
 const router = express.Router();
 
-// Get all rooms
 router.get("/", async (req, res) => {
   try {
     const rooms = await Room.find()
@@ -16,7 +15,6 @@ router.get("/", async (req, res) => {
   }
 });
 
-// Get single room with reviews
 router.get("/:id", async (req, res) => {
   try {
     const room = await Room.findById(req.params.id);
@@ -30,9 +28,7 @@ router.get("/:id", async (req, res) => {
 
     const roomData = room.toObject();
     
-    // Calculate rating statistics
     if (reviews && reviews.length > 0) {
-      // Count ratings
       const ratingCounts = Array(5).fill(0);
       let totalRating = 0;
 
@@ -43,11 +39,9 @@ router.get("/:id", async (req, res) => {
         }
       });
 
-      console.log('Rating counts:', ratingCounts); // Debug log
-      
       roomData.averageRating = (totalRating / reviews.length).toFixed(1);
       roomData.reviewCount = reviews.length;
-      roomData.ratingCounts = ratingCounts; // Add rating distribution
+      roomData.ratingCounts = ratingCounts;
       roomData.reviews = reviews;
     } else {
       roomData.averageRating = 0;
@@ -56,7 +50,6 @@ router.get("/:id", async (req, res) => {
       roomData.reviews = [];
     }
 
-    console.log('Sending room data:', roomData); // Debug log
     res.json(roomData);
   } catch (error) {
     console.error('Error fetching room details:', error);
@@ -64,18 +57,14 @@ router.get("/:id", async (req, res) => {
   }
 });
 
-// Get a single room by ID (with availability check)
 router.get("/room/:id", async (req, res) => {
   try {
-    console.log("📩 Receinmved request for room:", req.params.id); // Debugging
     const room = await Room.findById(req.params.id);
     
     if (!room) {
-      console.log("⚠️ Room not found!");
       return res.status(404).json({ message: "Room not found" });
     }
 
-    console.log("✅ Sending Room Data:", room); // Debugging
     res.json(room);
   } catch (error) {
     console.error("❌ Error fetching room:", error);
@@ -83,8 +72,6 @@ router.get("/room/:id", async (req, res) => {
   }
 });
 
-
-// Mark Room as Booked After Payment ✅
 router.post("/update-availability", async (req, res) => {
   try {
     const { roomId } = req.body;
@@ -104,7 +91,6 @@ router.post("/update-availability", async (req, res) => {
   }
 });
 
-// Update a room (Admin Only)
 router.put("/admin/update/:id", async (req, res) => {
   try {
     const { id } = req.params;
@@ -142,7 +128,6 @@ router.put("/admin/update/:id", async (req, res) => {
   }
 });
 
-// Delete a room (Admin Only)
 router.delete("/rooms/:id", async (req, res) => {
   try {
     await Room.findByIdAndDelete(req.params.id);
@@ -155,10 +140,7 @@ router.delete("/rooms/:id", async (req, res) => {
 module.exports = router;
 
 router.get("/users/:userId", async (req, res) => {
-  
   try {
-
-
     const user = await User.findById(req.params.userId);
     if (!user) {
       return res.status(404).json({ error: "User not found" });

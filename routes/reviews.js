@@ -6,7 +6,6 @@ const auth = require('../middleware/authMiddleware');
 const mongoose = require('mongoose');
 const Room = require('../models/Room');
 
-// Add this function at the top of your file
 const updateRoomRatings = async (roomId) => {
   try {
     const reviews = await Review.find({ roomId });
@@ -22,12 +21,10 @@ const updateRoomRatings = async (roomId) => {
   }
 };
 
-// Add a review
 router.post('/add', auth, async (req, res) => {
   try {
     const { bookingId, roomId, rating, review } = req.body;
 
-    // Validate required fields
     if (!bookingId || !roomId || !rating || !review) {
       return res.status(400).json({ 
         message: 'Missing required fields',
@@ -35,7 +32,6 @@ router.post('/add', auth, async (req, res) => {
       });
     }
 
-    // Validate booking exists and belongs to user
     const booking = await Booking.findOne({
       _id: bookingId,
       userId: req.user.id
@@ -45,18 +41,15 @@ router.post('/add', auth, async (req, res) => {
       return res.status(404).json({ message: 'Booking not found or unauthorized' });
     }
 
-    // Check if review already exists
     const existingReview = await Review.findOne({ bookingId });
     if (existingReview) {
       return res.status(400).json({ message: 'Review already exists for this booking' });
     }
 
-    // Validate rating
     if (rating < 1 || rating > 5) {
       return res.status(400).json({ message: 'Rating must be between 1 and 5' });
     }
 
-    // Create new review
     const newReview = new Review({
       bookingId,
       userId: req.user.id,
@@ -68,7 +61,6 @@ router.post('/add', auth, async (req, res) => {
     await newReview.save();
     await updateRoomRatings(roomId);
     
-    // Populate the saved review
     const populatedReview = await Review.findById(newReview._id)
       .populate('roomId', 'name')
       .populate('userId', 'name');
@@ -88,7 +80,6 @@ router.post('/add', auth, async (req, res) => {
   }
 });
 
-// Get room reviews
 router.get('/room/:roomId', async (req, res) => {
   try {
     const reviews = await Review.find({ roomId: req.params.roomId })
@@ -100,7 +91,6 @@ router.get('/room/:roomId', async (req, res) => {
   }
 });
 
-// Get user reviews
 router.get('/user', auth, async (req, res) => {
   try {
     const reviews = await Review.find({ userId: req.user.id })
@@ -112,15 +102,13 @@ router.get('/user', auth, async (req, res) => {
   }
 });
 
-// Get review by booking ID
 router.get('/booking/:bookingId', auth, async (req, res) => {
-    console.log("sdsd"+req.params.bookingId);
   try {
     const review = await Review.findOne({ 
       bookingId: req.params.bookingId 
     }).populate('roomId', 'name');
     if (!review) {
-      return res.status(200).json(null); // Return null instead of 404 if no review exists
+      return res.status(200).json(null);
     }
     
     res.json(review);
@@ -130,7 +118,6 @@ router.get('/booking/:bookingId', auth, async (req, res) => {
   }
 });
 
-// Edit review
 router.put('/edit/:reviewId', auth, async (req, res) => {
   try {
     const { rating, review } = req.body;
@@ -153,7 +140,6 @@ router.put('/edit/:reviewId', auth, async (req, res) => {
   }
 });
 
-// Delete review
 router.delete('/delete/:reviewId', auth, async (req, res) => {
   try {
     const review = await Review.findOne({
