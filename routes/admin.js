@@ -10,16 +10,32 @@ const router = express.Router();
 
 // ✅ create a rooms (Admin)
 router.post("/addrooms", verifyToken, adminMiddleware, async (req, res) => {
-
     try {
+        // Validate main image
+        if (!req.body.mainImage) {
+            return res.status(400).json({ message: "Main image URL is required" });
+        }
 
-        const newRoom = new Room(req.body);
+        // Validate additional images (optional)
+        if (req.body.additionalImages && Array.isArray(req.body.additionalImages)) {
+            if (req.body.additionalImages.length > 3) {
+                return res.status(400).json({ 
+                    message: "Maximum 3 additional images allowed" 
+                });
+            }
+        }
+
+        const newRoom = new Room({
+            ...req.body,
+            // Filter out any empty strings from additional images
+            additionalImages: (req.body.additionalImages || []).filter(Boolean)
+        });
+
         await newRoom.save();
-
         res.status(201).json({ message: "Room added successfully", room: newRoom });
     } catch (error) {
         console.error("❌ Error adding room:", error);
-        res.status(500).json({ message: "Error adding room", error });
+        res.status(500).json({ message: "Error adding room", error: error.message });
     }
 });
 
