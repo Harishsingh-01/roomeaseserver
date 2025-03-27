@@ -7,8 +7,7 @@ const router = express.Router();
 
 router.get("/", async (req, res) => {
   try {
-    const rooms = await Room.find()
-      .select('name type price imageUrl averageRating reviewCount available');
+    const rooms = await Room.find();
     res.status(200).json(rooms);
   } catch (error) {
     res.status(500).json({ message: "Error fetching rooms", error });
