@@ -27,7 +27,6 @@ router.post("/addrooms", verifyToken, adminMiddleware, async (req, res) => {
 
         const newRoom = new Room({
             ...req.body,
-            // Filter out any empty strings from additional images
             additionalImages: (req.body.additionalImages || []).filter(Boolean)
         });
 
