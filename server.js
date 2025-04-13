@@ -7,6 +7,7 @@ dotenv.config();
 const app = express();
 
 const allowedOrigins = [
+  "https://pgify.vercel.app/",
   "https://roomease-client-git-main-harishsingh-01s-projects.vercel.app",
   "https://roomease-client-4l1tlpyr2-harishsingh-01s-projects.vercel.app",
   "https://roomease-client.vercel.app",
