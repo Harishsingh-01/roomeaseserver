@@ -7,9 +7,9 @@ dotenv.config();
 const app = express();
 
 const allowedOrigins = [
-  "https://hotel-management-clientt-git-main-harishsingh-01s-projects.vercel.app",
-  "https://hotel-management-clientt-neon.vercel.app",
-  "https://hotel-management-clientt-harishsingh-01s-projects.vercel.app",
+  "https://roomease-client-git-main-harishsingh-01s-projects.vercel.app/",
+  "https://roomease-client-4l1tlpyr2-harishsingh-01s-projects.vercel.app/",
+  "https://roomease-client.vercel.app/",
 ];
 
 app.use(cors({
