@@ -90,8 +90,37 @@ router.delete("/delete/:roomId", verifyToken, adminMiddleware, async (req, res) 
 // Get all booked rooms
 router.get("/booked-rooms", verifyToken, adminMiddleware, async (req, res) => {
   try {
-      const bookedRooms = await Room.find({ available: false }); // Fetch rooms that are booked
-      res.status(200).json(bookedRooms);
+      // First find all bookings
+      const bookings = await Booking.find()
+          .populate('userId', 'name email')
+          .populate('roomId');
+      
+      // Get unique room IDs from bookings
+      const roomIds = [...new Set(bookings.map(booking => booking.roomId._id))];
+      
+      // Find all rooms that are either booked or marked as unavailable
+      const rooms = await Room.find({ 
+          $or: [
+              { _id: { $in: roomIds } },
+              { available: false }
+          ]
+      });
+      
+      // Combine room and booking data
+      const roomsWithBookings = rooms.map(room => {
+          const roomBooking = bookings.find(booking => 
+              booking.roomId._id.toString() === room._id.toString()
+          );
+          return {
+              ...room.toObject(),
+              booking: roomBooking ? {
+                  ...roomBooking.toObject(),
+                  user: roomBooking.userId
+              } : null
+          };
+      });
+
+      res.status(200).json(roomsWithBookings);
   } catch (error) {
       console.error("Error fetching booked rooms:", error);
       res.status(500).json({ message: "Failed to fetch booked rooms" });

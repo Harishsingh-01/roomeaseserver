@@ -144,4 +144,42 @@ router.get('/:bookingId', verifyToken, async (req, res) => {
   }
 });
 
+// Cancel booking
+router.post('/cancel/:bookingId', verifyToken, async (req, res) => {
+  try {
+    const booking = await Booking.findById(req.params.bookingId);
+    
+    if (!booking) {
+      return res.status(404).json({ message: 'Booking not found' });
+    }
+
+    // Check if the booking belongs to the user
+    if (booking.userId.toString() !== req.user.id) {
+      return res.status(403).json({ message: 'Not authorized to cancel this booking' });
+    }
+
+    // Check if cancellation is possible (before check-in date)
+    const checkInDate = new Date(booking.checkIn);
+    const today = new Date();
+    if (checkInDate <= today) {
+      return res.status(400).json({ message: 'Cannot cancel booking after check-in date' });
+    }
+
+    // Update room availability
+    await Room.findByIdAndUpdate(booking.roomId, { available: true });
+
+    // Update booking status
+    booking.status = 'cancelled';
+    await booking.save();
+
+    res.status(200).json({ 
+      message: 'Booking cancelled successfully',
+      refundAmount: booking.totalPrice
+    });
+  } catch (error) {
+    console.error('Error cancelling booking:', error);
+    res.status(500).json({ message: 'Failed to cancel booking' });
+  }
+});
+
 module.exports = router;

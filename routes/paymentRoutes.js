@@ -40,7 +40,7 @@ router.post("/create-checkout-session", async (req, res) => {
         },
       ],
       mode: "payment",
-      success_url: `https://hotel-management-clientt-git-main-harishsingh-01s-projects.vercel.app/success?roomId=${roomId}&userId=${userId}&checkIn=${checkIn}&checkOut=${checkOut}&totalPrice=${price}`,
+      success_url: `http://localhost:3000/success?roomId=${roomId}&userId=${userId}&checkIn=${checkIn}&checkOut=${checkOut}&totalPrice=${price}`,
     });
      
     res.json({ sessionId: session.id });

@@ -11,6 +11,7 @@ const allowedOrigins = [
   "https://roomease-client-git-main-harishsingh-01s-projects.vercel.app",
   "https://roomease-client-4l1tlpyr2-harishsingh-01s-projects.vercel.app",
   "https://roomease-client.vercel.app",
+  "http://localhost:3000",
 ];
 
 app.use(cors({

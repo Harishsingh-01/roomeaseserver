@@ -5,6 +5,7 @@ const User = require("../models/User");
 
 const router = express.Router();
 
+// Get all rooms
 router.get("/", async (req, res) => {
   try {
     const rooms = await Room.find();
@@ -14,6 +15,82 @@ router.get("/", async (req, res) => {
   }
 });
 
+// Get featured rooms (must be before /:id route)
+router.get('/featured', async (req, res) => {
+  try {
+    const featuredRooms = await Room.find()
+      .sort({ rating: -1, createdAt: -1 })
+      .limit(3)
+      .select('name type price mainImage amenities available rating');
+
+    res.json(featuredRooms);
+  } catch (error) {
+    console.error('Error fetching featured rooms:', error);
+    res.status(500).json({ message: 'Error fetching featured rooms' });
+  }
+});
+
+// Get room statistics
+router.get('/statistics', async (req, res) => {
+  try {
+    // Get total rooms count
+    const totalRooms = await Room.countDocuments();
+    console.log('Total rooms:', totalRooms);
+
+    // Get available rooms count
+    const availableRooms = await Room.countDocuments({ available: true });
+    console.log('Available rooms:', availableRooms);
+
+    // Get booked rooms count
+    const bookedRooms = await Room.countDocuments({ available: false });
+    console.log('Booked rooms:', bookedRooms);
+
+    // Get average rating with proper handling
+    let averageRating = 0;
+    try {
+      const ratingResult = await Room.aggregate([
+        { $match: { rating: { $exists: true, $ne: null } } },
+        { $group: { _id: null, avgRating: { $avg: "$rating" } } }
+      ]);
+      
+      if (ratingResult && ratingResult.length > 0) {
+        averageRating = ratingResult[0].avgRating || 0;
+      }
+    } catch (ratingError) {
+      console.error('Error calculating average rating:', ratingError);
+      // If rating calculation fails, we'll use 0 as default
+    }
+
+    console.log('Average rating:', averageRating);
+
+    // Calculate satisfaction rate
+    const satisfactionRate = totalRooms > 0 
+      ? Math.round((availableRooms / totalRooms) * 100)
+      : 0;
+
+    console.log('Satisfaction rate:', satisfactionRate);
+
+    res.json({
+      success: true,
+      data: {
+        totalRooms,
+        availableRooms,
+        bookedRooms,
+        averageRating: Number(averageRating.toFixed(1)),
+        satisfactionRate
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching room statistics:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Error fetching room statistics',
+      error: error.message 
+    });
+  }
+});
+
+// Get room by ID
 router.get("/:id", async (req, res) => {
   try {
     const room = await Room.findById(req.params.id);
