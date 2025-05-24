@@ -2,6 +2,7 @@ const express = require("express");
 const mongoose = require("mongoose");
 const dotenv = require("dotenv");
 const cors = require("cors");
+const { scheduleExpiredBookingsCheck } = require('./scheduler');
 
 dotenv.config();
 const app = express();
@@ -54,7 +55,12 @@ const contactRoutes = require('./routes/contactRoutes');
 app.use('/api/contact', contactRoutes);
 
 mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
-  .then(() => console.log("✅ MongoDB Connected"))
+  .then(() => {
+    console.log("✅ MongoDB Connected");
+    // Initialize the scheduler after successful database connection
+    scheduleExpiredBookingsCheck();
+    console.log("✅ Booking expiration scheduler initialized");
+  })
   .catch((err) => console.log("❌ MongoDB Error:", err));
 
 const PORT = process.env.PORT || 5000;

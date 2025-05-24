@@ -1,6 +1,7 @@
 const express = require("express");
 const Room = require("../models/Room");
 const User = require("../models/User");
+const mongoose = require("mongoose");
 
 const Booking = require("../models/Booking");
 const verifyToken = require("../middleware/authMiddleware");
@@ -139,25 +140,61 @@ router.get("/booked-rooms", verifyToken, adminMiddleware, async (req, res) => {
   });
   
 
-  router.delete("/user-delete/:userId",async(req,res)=>{    
-    try{
+  router.delete("/user-delete/:userId", verifyToken, adminMiddleware, async (req, res) => {    
+    try {
       const receivedUser = req.params.userId;
-      const checkUser=await User.findById(receivedUser);
-      if(!checkUser){
-        return res.status(400).json({message:"User not found"})
+      const checkUser = await User.findById(receivedUser);
+      
+      if (!checkUser) {
+        return res.status(400).json({ message: "User not found" });
       }
 
-      await User.findByIdAndDelete(receivedUser);
-      res.json({message:"User deleted Succesfully"})
+      // Start a session for transaction
+      const session = await mongoose.startSession();
+      session.startTransaction();
+
+      try {
+        // Find all bookings for this user
+        const userBookings = await Booking.find({ userId: receivedUser });
+        
+        // Update room availability for each booking
+        for (const booking of userBookings) {
+          await Room.findByIdAndUpdate(
+            booking.roomId,
+            { available: true },
+            { session }
+          );
+        }
+
+        // Delete all bookings associated with this user
+        await Booking.deleteMany({ userId: receivedUser }, { session });
+
+        // Delete the user
+        await User.findByIdAndDelete(receivedUser, { session });
+
+        // Commit the transaction
+        await session.commitTransaction();
+        
+        res.json({ 
+          message: "User and associated bookings deleted successfully",
+          deletedBookings: userBookings.length
+        });
+      } catch (error) {
+        // If an error occurs, abort the transaction
+        await session.abortTransaction();
+        throw error;
+      } finally {
+        session.endSession();
+      }
+    } catch (err) {
+      console.error("Error deleting user:", err);
+      return res.status(500).json({ 
+        message: "Error deleting user", 
+        error: err.message 
+      });
     }
-    catch(err){
-      console.log(err)
-      return res.status(400).json("Error User Deletion",err)
-    }
+  });
 
-
-
-  })
 
 
 // // ✅ Create a room (Admin)
