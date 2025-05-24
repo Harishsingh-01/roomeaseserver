@@ -9,7 +9,7 @@ const adminMiddleware = require("../middleware/adminMiddleware");
 const router = express.Router();
 
 // ✅ create a rooms (Admin)
-router.post("/addrooms", verifyToken, adminMiddleware, async (req, res) => {
+router.post("/addroom", verifyToken, adminMiddleware, async (req, res) => {
     try {
         // Validate main image
         if (!req.body.mainImage) {
