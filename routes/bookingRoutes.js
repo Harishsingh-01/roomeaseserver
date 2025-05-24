@@ -3,6 +3,7 @@ const jwt = require("jsonwebtoken");
 const Booking = require("../models/Booking");
 const Room = require("../models/Room");
 const verifyToken = require("../middleware/authMiddleware"); // Middleware to verify JWT
+const mongoose = require("mongoose");
 
 const router = express.Router();
 
@@ -51,41 +52,60 @@ const router = express.Router();
 
 
 // 📌 Get all bookings for a logged-in user (Protected Route)
-  router.get("/userbookings", verifyToken, async (req, res) => {
+router.get("/userbookings", verifyToken, async (req, res) => {
+  try {
+    const userId = req.user?.id;
+    
+    const bookings = await Booking.find({ userId })
+      .populate("roomId")
+      .sort({ createdAt: -1 });
 
-    try {
-      const userId = req.user?.id; // Ensure userId is extracted correctly
-
-      
-      const bookings = await Booking.find({ userId }).populate("roomId");
-
-      if (!bookings.length) {
-        return res.status(404).json({ message: "No bookings found" });
-      }
-
-      res.status(200).json(bookings);
-    } catch (error) {
-      console.error("Error fetching bookings:", error);    
-      res.status(500).json({ message: "Error fetching bookings", error: error.message });
+    if (!bookings.length) {
+      return res.status(404).json({ message: "No bookings found" });
     }
-  });
 
+    res.status(200).json(bookings);
+  } catch (error) {
+    console.error("Error fetching bookings:", error);    
+    res.status(500).json({ message: "Error fetching bookings", error: error.message });
+  }
+});
 
-  router.post("/update-status", async (req, res) => {
+// Update booking status (for expired bookings)
+router.post("/update-status", async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
   try {
     const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
     // Find expired bookings
-    const expiredBookings = await Booking.find({ checkoutDate: { $lt: today } });
+    const expiredBookings = await Booking.find({
+      checkOut: { $lt: today },
+      status: 'booked'
+    }).session(session);
 
-    // Update each expired booking's room to available
-    for (let booking of expiredBookings) {
-      await Room.findByIdAndUpdate(booking.roomId, { available: true });
+    // Update each expired booking
+    for (const booking of expiredBookings) {
+      await Booking.findByIdAndUpdate(
+        booking._id,
+        { status: 'completed' },
+        { session }
+      );
     }
 
-    res.json({ message: "Room availability updated" });
+    await session.commitTransaction();
+    res.json({ 
+      message: "Room availability updated",
+      updatedBookings: expiredBookings.length
+    });
   } catch (error) {
-    res.status(500).json({ error: "Server error" });
+    await session.abortTransaction();
+    console.error("Error updating booking status:", error);
+    res.status(500).json({ error: "Server error", details: error.message });
+  } finally {
+    session.endSession();
   }
 });
 
@@ -146,15 +166,20 @@ router.get('/:bookingId', verifyToken, async (req, res) => {
 
 // Cancel booking
 router.post('/cancel/:bookingId', verifyToken, async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
   try {
-    const booking = await Booking.findById(req.params.bookingId);
+    const booking = await Booking.findById(req.params.bookingId).session(session);
     
     if (!booking) {
+      await session.abortTransaction();
       return res.status(404).json({ message: 'Booking not found' });
     }
 
     // Check if the booking belongs to the user
     if (booking.userId.toString() !== req.user.id) {
+      await session.abortTransaction();
       return res.status(403).json({ message: 'Not authorized to cancel this booking' });
     }
 
@@ -162,23 +187,27 @@ router.post('/cancel/:bookingId', verifyToken, async (req, res) => {
     const checkInDate = new Date(booking.checkIn);
     const today = new Date();
     if (checkInDate <= today) {
+      await session.abortTransaction();
       return res.status(400).json({ message: 'Cannot cancel booking after check-in date' });
     }
 
-    // Update room availability
-    await Room.findByIdAndUpdate(booking.roomId, { available: true });
-
     // Update booking status
     booking.status = 'cancelled';
-    await booking.save();
+    await booking.save({ session });
 
+    // Room availability will be updated by the Booking model's middleware
+
+    await session.commitTransaction();
     res.status(200).json({ 
       message: 'Booking cancelled successfully',
       refundAmount: booking.totalPrice
     });
   } catch (error) {
+    await session.abortTransaction();
     console.error('Error cancelling booking:', error);
-    res.status(500).json({ message: 'Failed to cancel booking' });
+    res.status(500).json({ message: 'Failed to cancel booking', error: error.message });
+  } finally {
+    session.endSession();
   }
 });
 
