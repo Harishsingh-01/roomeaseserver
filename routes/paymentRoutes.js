@@ -27,6 +27,9 @@ router.post("/create-checkout-session", async (req, res) => {
       return res.status(400).json({ error: "Invalid booking details" });
     }
 
+    // Ensure the price is an integer in the smallest currency unit (paise)
+    const unitAmountInPaise = Math.round(price * 100); // Use Math.round for safety
+
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
       line_items: [
@@ -34,13 +37,13 @@ router.post("/create-checkout-session", async (req, res) => {
           price_data: {
             currency: "inr",
             product_data: { name: "Hotel Room Booking" },
-            unit_amount: price * 100,
+            unit_amount: unitAmountInPaise, // Use the rounded integer amount
           },
           quantity: 1,
         },
       ],
       mode: "payment",
-      success_url: `http://localhost:3000/success?roomId=${roomId}&userId=${userId}&checkIn=${checkIn}&checkOut=${checkOut}&totalPrice=${price}`,
+      success_url: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/success?roomId=${roomId}&userId=${userId}&checkIn=${checkIn}&checkOut=${checkOut}&totalPrice=${price}`,
     });
      
     res.json({ sessionId: session.id });
