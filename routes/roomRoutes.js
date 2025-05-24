@@ -5,10 +5,11 @@ const User = require("../models/User");
 
 const router = express.Router();
 
-// Get all rooms
+// Get all available rooms
 router.get("/", async (req, res) => {
   try {
-    const rooms = await Room.find();
+    const rooms = await Room.find({ available: true })
+      .sort({ createdAt: -1 });
     res.status(200).json(rooms);
   } catch (error) {
     res.status(500).json({ message: "Error fetching rooms", error });
@@ -18,7 +19,7 @@ router.get("/", async (req, res) => {
 // Get featured rooms (must be before /:id route)
 router.get('/featured', async (req, res) => {
   try {
-    const featuredRooms = await Room.find()
+    const featuredRooms = await Room.find({ available: true })
       .sort({ rating: -1, createdAt: -1 })
       .limit(3)
       .select('name type price mainImage amenities available rating');
@@ -58,17 +59,12 @@ router.get('/statistics', async (req, res) => {
       }
     } catch (ratingError) {
       console.error('Error calculating average rating:', ratingError);
-      // If rating calculation fails, we'll use 0 as default
     }
-
-    console.log('Average rating:', averageRating);
 
     // Calculate satisfaction rate
     const satisfactionRate = totalRooms > 0 
       ? Math.round((availableRooms / totalRooms) * 100)
       : 0;
-
-    console.log('Satisfaction rate:', satisfactionRate);
 
     res.json({
       success: true,
@@ -90,7 +86,7 @@ router.get('/statistics', async (req, res) => {
   }
 });
 
-// Get room by ID
+// Get room by ID (available to all, even if room is booked)
 router.get("/:id", async (req, res) => {
   try {
     const room = await Room.findById(req.params.id);
@@ -133,21 +129,18 @@ router.get("/:id", async (req, res) => {
   }
 });
 
-router.get("/room/:id", async (req, res) => {
+// Admin route to get all rooms (including unavailable ones)
+router.get("/admin/all", async (req, res) => {
   try {
-    const room = await Room.findById(req.params.id);
-    
-    if (!room) {
-      return res.status(404).json({ message: "Room not found" });
-    }
-
-    res.json(room);
+    const rooms = await Room.find()
+      .sort({ createdAt: -1 });
+    res.status(200).json(rooms);
   } catch (error) {
-    console.error("❌ Error fetching room:", error);
-    res.status(500).json({ message: "Internal Server Error" });
+    res.status(500).json({ message: "Error fetching rooms", error });
   }
 });
 
+// Update room availability (admin only)
 router.post("/update-availability", async (req, res) => {
   try {
     const { roomId } = req.body;
@@ -167,6 +160,7 @@ router.post("/update-availability", async (req, res) => {
   }
 });
 
+// Admin update room
 router.put("/admin/update/:id", async (req, res) => {
   try {
     const { id } = req.params;
@@ -198,7 +192,7 @@ router.put("/admin/update/:id", async (req, res) => {
   } catch (error) {
     res.status(500).json({ 
       success: false,
-      message: "Error updating room", 
+      message: "Error updating room",
       error: error.message 
     });
   }
