@@ -67,6 +67,23 @@ router.post("/send-otp", async (req, res) => {
       to: email,
       subject: "Your OTP Code",
       text: `Your OTP is ${otpCode}. It will expire in 5 minutes.`,
+      html: `
+        <div style="font-family: 'Segoe UI', Arial, sans-serif; background: #f4f8fb; padding: 32px;">
+          <div style="max-width: 480px; margin: 0 auto; background: #fff; border-radius: 12px; box-shadow: 0 2px 8px #0001; overflow: hidden;">
+            <div style="background: #10b981; padding: 24px 0; text-align: center;">
+              <img src='https://pgify.vercel.app/mainlogo.png' alt='PGify Logo' style='height: 40px; margin-bottom: 8px;' />
+              <h2 style="color: #fff; margin: 0; font-size: 1.5rem;">PGify Verification</h2>
+            </div>
+            <div style="padding: 32px 24px; text-align: center;">
+              <h3 style="color: #10b981; margin-bottom: 16px;">Your OTP Code</h3>
+              <div style="font-size: 2.5rem; font-weight: bold; letter-spacing: 8px; color: #18191A; margin-bottom: 16px;">${otpCode}</div>
+              <p style="color: #555; font-size: 1rem; margin-bottom: 24px;">Enter this code to verify your email address. This code will expire in <b>5 minutes</b>.</p>
+              <p style="color: #888; font-size: 0.95rem;">If you did not request this, you can safely ignore this email.</p>
+            </div>
+            <div style="background: #f4f8fb; padding: 16px; text-align: center; color: #aaa; font-size: 0.9rem;">&copy; ${new Date().getFullYear()} PGify</div>
+          </div>
+        </div>
+      `
     };
 
     await transporter.sendMail(mailOptions);    
@@ -90,7 +107,24 @@ router.post("/send-booking-email", async (req, res) => {
           from: process.env.EMAIL_USER,
           to: email,
           subject: "Room Booking Successful!",
-          text: `Dear ${user.name},\n\nYour room has been successfully booked!\n\nThank you for choosing us!`
+          text: `Dear ${user.name},\n\nYour room has been successfully booked!\n\nThank you for choosing us!`,
+          html: `
+            <div style="font-family: 'Segoe UI', Arial, sans-serif; background: #f4f8fb; padding: 32px;">
+              <div style="max-width: 480px; margin: 0 auto; background: #fff; border-radius: 12px; box-shadow: 0 2px 8px #0001; overflow: hidden;">
+                <div style="background: #10b981; padding: 24px 0; text-align: center;">
+                  <img src='https://pgify.vercel.app/mainlogo.png' alt='PGify Logo' style='height: 40px; margin-bottom: 8px;' />
+                  <h2 style="color: #fff; margin: 0; font-size: 1.5rem;">Booking Confirmed!</h2>
+                </div>
+                <div style="padding: 32px 24px; text-align: center;">
+                  <h3 style="color: #10b981; margin-bottom: 16px;">Dear ${user.name},</h3>
+                  <p style="color: #222; font-size: 1.1rem; margin-bottom: 16px;">Your room has been <b>successfully booked</b>!</p>
+                  <p style="color: #555; font-size: 1rem; margin-bottom: 24px;">Thank you for choosing <b>PGify</b> for your stay. We look forward to hosting you!</p>
+                  <a href="https://pgify.vercel.app/bookings" style="display: inline-block; background: #10b981; color: #fff; text-decoration: none; padding: 12px 32px; border-radius: 6px; font-weight: bold; font-size: 1rem; margin-top: 12px;">View My Bookings</a>
+                </div>
+                <div style="background: #f4f8fb; padding: 16px; text-align: center; color: #aaa; font-size: 0.9rem;">&copy; ${new Date().getFullYear()} PGify</div>
+              </div>
+            </div>
+          `
       };
 
       await transporter.sendMail(mailOptions);
