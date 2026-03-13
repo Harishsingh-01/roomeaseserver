@@ -6,6 +6,8 @@ const mongoose = require("mongoose");
 const Booking = require("../models/Booking");
 const verifyToken = require("../middleware/authMiddleware");
 const adminMiddleware = require("../middleware/adminMiddleware");
+const Review = require("../models/Review");
+const { updateRoomRatings } = require("./reviews");
 
 const router = express.Router();
 
@@ -140,53 +142,65 @@ router.get("/booked-rooms", verifyToken, adminMiddleware, async (req, res) => {
   });
   
 
-  router.delete("/users/:id", async (req, res) => {
+  router.delete("/user-delete/:userId", verifyToken, adminMiddleware, async (req, res) => {    
     try {
-      const user = await User.findById(req.params.id);
-      if (!user) {
-        return res.status(404).json({ message: "User not found" });
-      }
+      const receivedUser = req.params.userId;
 
       // Start a session for transaction
       const session = await mongoose.startSession();
       session.startTransaction();
 
       try {
-        // Delete all bookings associated with the user
-        await Booking.deleteMany({ userId: user._id }, { session });
+        // Find all bookings for this user
+        const userBookings = await Booking.find({ userId: receivedUser });
+        
+        // Update room availability for each booking
+        for (const booking of userBookings) {
+          await Room.findByIdAndUpdate(
+            booking.roomId,
+            { available: true },
+            { session }
+          );
+        }
 
-        // Delete all reviews by the user
-        await Review.deleteMany({ userId: user._id }, { session });
+        // Find all reviews by this user
+        const userReviews = await Review.find({ userId: receivedUser });
+        
+        // Update room ratings for each review
+        for (const review of userReviews) {
+          await updateRoomRatings(review.roomId);
+        }
 
-        // Update rooms that were booked by this user to be available again
-        await Room.updateMany(
-          { bookedBy: user._id },
-          { 
-            $set: { 
-              available: true,
-              bookedBy: null 
-            }
-          },
-          { session }
-        );
+        // Delete all reviews by this user
+        await Review.deleteMany({ userId: receivedUser }, { session });
 
-        // Finally delete the user
-        await User.findByIdAndDelete(user._id, { session });
+        // Delete all bookings associated with this user
+        await Booking.deleteMany({ userId: receivedUser }, { session });
+
+        // Delete the user
+        await User.findByIdAndDelete(receivedUser, { session });
 
         // Commit the transaction
         await session.commitTransaction();
-        session.endSession();
-
-        res.status(200).json({ message: "User and associated data deleted successfully" });
+        
+        res.json({ 
+          message: "User and associated data deleted successfully",
+          deletedBookings: userBookings.length,
+          deletedReviews: userReviews.length
+        });
       } catch (error) {
-        // If anything fails, rollback the transaction
+        // If an error occurs, abort the transaction
         await session.abortTransaction();
-        session.endSession();
         throw error;
+      } finally {
+        session.endSession();
       }
-    } catch (error) {
-      console.error("Error deleting user:", error);
-      res.status(500).json({ message: "Error deleting user", error: error.message });
+    } catch (err) {
+      console.error("Error deleting user:", err);
+      return res.status(500).json({ 
+        message: "Error deleting user", 
+        error: err.message 
+      });
     }
   });
 

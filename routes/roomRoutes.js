@@ -2,6 +2,8 @@ const express = require("express");
 const Room = require("../models/Room");
 const Review = require("../models/Review");
 const User = require("../models/User");
+const verifyToken = require("../middleware/authMiddleware");
+const adminMiddleware = require("../middleware/adminMiddleware");
 
 const router = express.Router();
 
@@ -130,7 +132,7 @@ router.get("/:id", async (req, res) => {
 });
 
 // Admin route to get all rooms (including unavailable ones)
-router.get("/admin/all", async (req, res) => {
+router.get("/admin/all", verifyToken, adminMiddleware, async (req, res) => {
   try {
     const rooms = await Room.find()
       .sort({ createdAt: -1 });

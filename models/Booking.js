@@ -1,6 +1,5 @@
 const mongoose = require("mongoose");
 const User = require("./User");
-const Room = require("./Room");
 
 const BookingSchema = new mongoose.Schema({
   userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true }, // Who booked it?
@@ -15,6 +14,7 @@ const BookingSchema = new mongoose.Schema({
 BookingSchema.pre('save', async function(next) {
   try {
     if (this.isNew) { // Only check for new bookings
+      const Room = mongoose.model('Room');
       const room = await Room.findById(this.roomId);
       if (!room) {
         throw new Error('Room not found');
@@ -54,6 +54,7 @@ BookingSchema.pre('remove', async function(next) {
     );
     
     // Update room availability
+    const Room = mongoose.model('Room');
     await Room.findByIdAndUpdate(
       this.roomId,
       { available: true }
@@ -72,6 +73,7 @@ BookingSchema.pre('findOneAndUpdate', async function(next) {
     if (update.status === 'cancelled' || update.status === 'completed') {
       const booking = await this.model.findOne(this.getQuery());
       if (booking) {
+        const Room = mongoose.model('Room');
         await Room.findByIdAndUpdate(
           booking.roomId,
           { available: true }

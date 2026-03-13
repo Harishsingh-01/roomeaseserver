@@ -49,12 +49,12 @@ const AdminRoute = require("./routes/admin");
 app.use("/api/admin", AdminRoute);
 
 const reviewRoutes = require("./routes/reviews");
-app.use("/api/reviews", reviewRoutes);
+app.use("/api/reviews", reviewRoutes.router);
 
 const contactRoutes = require('./routes/contactRoutes');
 app.use('/api/contact', contactRoutes);
 
-mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
+mongoose.connect(process.env.MONGO_URI)
   .then(() => {
     console.log("✅ MongoDB Connected");
     // Initialize the scheduler after successful database connection

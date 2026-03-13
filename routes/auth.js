@@ -3,7 +3,7 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 const OTP = require("../models/OTP");
-const transporter = require("../middleware/sendOTP");
+const { sendEmail } = require("../middleware/emailService");
 const otpGenerator = require("otp-generator");
 const dotenv = require("dotenv");
 const ResetToken = require('../models/ResetToken');
@@ -88,7 +88,12 @@ router.post("/send-otp", async (req, res) => {
       `
     };
 
-    await transporter.sendMail(mailOptions);    
+    await sendEmail({
+      to: email,
+      subject: mailOptions.subject,
+      text: mailOptions.text,
+      html: mailOptions.html
+    });    
     res.json({ success: true, message: "OTP sent successfully" });
 
   } catch (error) {
@@ -129,7 +134,12 @@ router.post("/send-booking-email", async (req, res) => {
           `
       };
 
-      await transporter.sendMail(mailOptions);
+      await sendEmail({
+        to: email,
+        subject: mailOptions.subject,
+        text: mailOptions.text,
+        html: mailOptions.html
+      });
       res.json({ success: true, message: "Email sent successfully!" });
 
   } catch (error) {
@@ -194,7 +204,12 @@ router.post('/forgot-password', async (req, res) => {
         </div>
       `
     };
-    await transporter.sendMail(mailOptions);
+    await sendEmail({
+      to: user.email,
+      subject: mailOptions.subject,
+      text: mailOptions.text,
+      html: mailOptions.html
+    });
     res.json({ success: true, message: 'Password reset email sent.' });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Error sending reset email', error: error.message });

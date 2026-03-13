@@ -1,5 +1,4 @@
 const mongoose = require("mongoose");
-const Booking = require("./Booking");
 
 const RoomSchema = new mongoose.Schema({
   name: { type: String, required: true },
@@ -26,6 +25,7 @@ const RoomSchema = new mongoose.Schema({
 RoomSchema.post("findOneAndUpdate", async function (doc) {
   if (doc && doc.available === true) {
     try {
+      const Booking = mongoose.model('Booking');
       await Booking.deleteOne({ roomId: doc._id });
     } catch (error) {
       // Handle error if needed

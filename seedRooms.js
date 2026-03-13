@@ -3,8 +3,7 @@ const User = require("./models/User"); // Adjust the path if your model is store
 
 // MongoDB connection
 mongoose.connect(
-  "mongodb+srv://harishchaudhary790:mymongodb123@cluster0.or3xpiz.mongodb.net/",
-  { useNewUrlParser: true, useUnifiedTopology: true }
+  "mongodb+srv://harishchaudhary790:mymongodb123@cluster0.or3xpiz.mongodb.net/"
 )
   .then(() => console.log("Connected to MongoDB"))
   .catch((err) => console.error("Connection error:", err));

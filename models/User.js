@@ -1,6 +1,4 @@
 const mongoose = require('mongoose')
-const Booking = require('./Booking')
-const Room = require('./Room')
 
 const UserSchema = new mongoose.Schema({
     name: String,
@@ -14,6 +12,8 @@ const UserSchema = new mongoose.Schema({
 UserSchema.pre('remove', async function(next) {
     try {
         // Find all bookings for this user
+        const Booking = mongoose.model('Booking');
+        const Room = mongoose.model('Room');
         const userBookings = await Booking.find({ userId: this._id })
         
         // Update room availability for each booking
@@ -35,6 +35,7 @@ UserSchema.pre('remove', async function(next) {
 
 // Add a method to get user's bookings
 UserSchema.methods.getBookings = async function() {
+    const Booking = mongoose.model('Booking');
     return await Booking.find({ userId: this._id })
 }
 

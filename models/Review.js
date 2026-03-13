@@ -38,7 +38,7 @@ const reviewSchema = new mongoose.Schema({
 // Add indexes for better query performance
 reviewSchema.index({ roomId: 1 });
 reviewSchema.index({ userId: 1 });
-reviewSchema.index({ bookingId: 1 }, { unique: true });
+// bookingId already has unique: true in schema definition, no need for separate index
 
 const Review = mongoose.model('Review', reviewSchema);
 

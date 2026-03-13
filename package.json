@@ -17,11 +17,15 @@
     "crypto": "^1.0.1",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
+    "express-mongo-sanitize": "^2.2.0",
+    "express-rate-limit": "^8.3.1",
+    "helmet": "^8.1.0",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.12.1",
     "node-cron": "^4.0.7",
     "nodemailer": "^6.10.0",
     "otp-generator": "^4.0.1",
+    "resend": "^6.9.3",
     "stripe": "^17.7.0"
   }
 }

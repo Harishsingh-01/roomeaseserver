@@ -43,7 +43,7 @@ router.post("/create-checkout-session", async (req, res) => {
         },
       ],
       mode: "payment",
-      success_url: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/success?roomId=${roomId}&userId=${userId}&checkIn=${checkIn}&checkOut=${checkOut}&totalPrice=${price}`,
+      success_url: `http://localhost:3000/success?roomId=${roomId}&userId=${userId}&checkIn=${checkIn}&checkOut=${checkOut}&totalPrice=${price}`,
     });
      
     res.json({ sessionId: session.id });
@@ -54,15 +54,16 @@ router.post("/create-checkout-session", async (req, res) => {
 });
 
 router.post("/confirm-booking", async (req, res) => {
-  let session = null;
-
   try {
+    console.log("📥 Received booking confirmation request:", req.body);
     const { roomId, userId, checkIn, checkOut, totalPrice } = req.body;
 
     if (!roomId || !userId || !checkIn || !checkOut || !totalPrice) {
+      console.log("❌ Missing booking details:", { roomId, userId, checkIn, checkOut, totalPrice });
       return res.status(400).json({ error: "Missing booking details" });
     }
 
+    // Check for existing bookings with date overlap
     const existingBooking = await Booking.findOne({
       roomId,
       $or: [
@@ -78,10 +79,21 @@ router.post("/confirm-booking", async (req, res) => {
       return res.status(400).json({ error: "Room is already booked for these dates" });
     }
 
+    // Check if room exists and is available
     const room = await Room.findById(roomId);
     if (!room || !room.available) {
       return res.status(400).json({ error: "Room is not available" });
     }
+
+    // Create the booking - the pre-save middleware will handle room availability
+    console.log("📝 Creating booking with data:", {
+      userId,
+      roomId,
+      checkIn: new Date(checkIn),
+      checkOut: new Date(checkOut),
+      totalPrice,
+      status: 'booked'
+    });
 
     const booking = new Booking({
       userId,
@@ -92,10 +104,9 @@ router.post("/confirm-booking", async (req, res) => {
       status: 'booked'
     });
 
+    console.log("💾 Saving booking to database...");
     await booking.save();
-
-    room.available = false;
-    await room.save();
+    console.log("✅ Booking saved successfully:", booking._id);
 
     res.status(200).json({
       success: true,
@@ -104,22 +115,8 @@ router.post("/confirm-booking", async (req, res) => {
     });
 
   } catch (error) {
-    console.error("Booking Error:", error);
-
-    if (session) {
-      try {
-        await session.abortTransaction();
-        session.endSession();
-      } catch (sessionError) {
-        console.error("Session abort error:", sessionError);
-      }
-    }
-
-    if (error.code === 251) {
-      return res.status(500).json({
-        error: "Booking system temporarily unavailable. Please try again."
-      });
-    }
+    console.error("❌ Booking Error:", error);
+    console.error("❌ Error stack:", error.stack);
 
     if (error.code === 11000) {
       return res.status(400).json({
@@ -127,18 +124,23 @@ router.post("/confirm-booking", async (req, res) => {
       });
     }
 
+    // Handle specific errors from Booking model middleware
+    if (error.message === 'Room not found') {
+      return res.status(400).json({
+        error: "Room not found"
+      });
+    }
+
+    if (error.message === 'Room is not available') {
+      return res.status(400).json({
+        error: "Room is no longer available"
+      });
+    }
+
     res.status(500).json({
       error: "Unable to complete booking. Please try again.",
       details: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
-  } finally {
-    if (session) {
-      try {
-        session.endSession();
-      } catch (error) {
-        console.error("Session end error:", error);
-      }
-    }
   }
 });
 
